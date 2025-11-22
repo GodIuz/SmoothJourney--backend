@@ -1,0 +1,6 @@
+@SmoothJourneyAPI_HostAddress = http://localhost:5098
+
+GET {{SmoothJourneyAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

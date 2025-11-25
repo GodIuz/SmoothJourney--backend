@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 //using SmoothJourneyAPI.Repositories;
 //using SmoothJourneyAPI.Services;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using SmoothJourneyAPI.Data;
 
 namespace SmoothJourneyAPI
 {
@@ -14,6 +16,10 @@ namespace SmoothJourneyAPI
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddDbContext<SmoothJourneyDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("SmoothJourneyDbContext") ?? throw new InvalidOperationException("Connection string 'SmoothJourneyDbContext' not found.")));
+            //builder.Services.AddDbContext<SmoothJourneyDbContext>(options =>
+            //    options.UseSqlServer(builder.Configuration.GetConnectionString("SmoothJourneyDbContext") ?? throw new InvalidOperationException("Connection string 'SmoothJourneyDbContext' not found.")));
             //builder.Services.AddDbContext<SmoothJourneyDbContext>(options =>
             //    options.UseSqlServer(builder.Configuration.GetConnectionString("SmoothJourneyDbContext") ?? throw new InvalidOperationException("Connection string 'SmoothJourneyDbContext' not found.")));
             

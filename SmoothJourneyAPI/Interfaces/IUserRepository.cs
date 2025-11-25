@@ -1,4 +1,5 @@
 ﻿using SmoothJourneyAPI.Models;
+
 namespace SmoothJourneyAPI.Interfaces
 {
     public interface IUserRepository

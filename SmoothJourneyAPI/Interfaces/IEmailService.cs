@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace SmoothJourneyAPI.Interfaces
+﻿namespace SmoothJourneyAPI.Interfaces
 {
     public interface IEmailService
     {

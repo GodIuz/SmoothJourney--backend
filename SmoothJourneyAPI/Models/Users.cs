@@ -21,16 +21,26 @@ namespace SmoothJourneyAPI.Models
         [Required]
         public string PasswordSalt { get; set; } = "";
 
-        [MaxLength(50)] public string FirstName { get; set; } = "";
-        [MaxLength(50)] public string LastName { get; set; } = "";
-        [MaxLength(50)] public string Country { get; set; } = "";
-
+        
+        [MaxLength(50)] 
+        public string FirstName { get; set; } = "";
+        
+        [MaxLength(50)] 
+        public string LastName { get; set; } = "";
+        
+        [MaxLength(50)] 
+        public string Country { get; set; } = "";
+        
+        
         public bool EmailConfirmed { get; set; } = false;
-        public string? Role { get; set; } = "User";
-
+        
+        public string Role { get; set; } = "User";
+        
         public DateOnly? DateOfBirth { get; set; }
+        
+        
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        public ICollection<RefreshTokens>? RefreshTokens { get; set; }
+        
+        public ICollection<RefreshToken>? RefreshTokens { get; set; }
     }
 }

@@ -1,78 +1,64 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-//using SmoothJourneyAPI.Data;
-//using SmoothJourneyAPI.Interfaces;
-//using SmoothJourneyAPI.Repositories;
-//using SmoothJourneyAPI.Services;
-using System.Text;
-using Microsoft.Extensions.DependencyInjection;
 using SmoothJourneyAPI.Data;
+using SmoothJourneyAPI.Interfaces;
+using SmoothJourneyAPI.Middleware;
+using SmoothJourneyAPI.Repositories;
+using SmoothJourneyAPI.Services;
+using System.Text;
 
-namespace SmoothJourneyAPI
+var builder = WebApplication.CreateBuilder(args);
+
+// DbContext
+builder.Services.AddDbContext<SmoothJourneyDbContext>(opts =>
+    opts.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repos & Services
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<PasswordService>(); // stateless => singleton ok
+
+// AutoMapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// JWT
+var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+builder.Services.AddAuthentication(options =>
 {
-    public class Program
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = true;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
-            builder.Services.AddDbContext<SmoothJourneyDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("SmoothJourneyDbContext") ?? throw new InvalidOperationException("Connection string 'SmoothJourneyDbContext' not found.")));
-            //builder.Services.AddDbContext<SmoothJourneyDbContext>(options =>
-            //    options.UseSqlServer(builder.Configuration.GetConnectionString("SmoothJourneyDbContext") ?? throw new InvalidOperationException("Connection string 'SmoothJourneyDbContext' not found.")));
-            //builder.Services.AddDbContext<SmoothJourneyDbContext>(options =>
-            //    options.UseSqlServer(builder.Configuration.GetConnectionString("SmoothJourneyDbContext") ?? throw new InvalidOperationException("Connection string 'SmoothJourneyDbContext' not found.")));
-            
-            //builder.Services.AddScoped<IUserRepository, UserRepository>();
-            //builder.Services.AddScoped<IAuthService, AuthService>();
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateLifetime = true
+    };
+});
 
-            //// Password service injection
-            //builder.Services.AddSingleton<PasswordService>(); 
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-            // AutoMapper
-            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+var app = builder.Build();
 
-            // JWT setup
-            var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = false; // true in prod
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateLifetime = true
-                };
-            });
-
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            app.Run();
-        }
-    }
-}
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseHttpsRedirection();
+app.UseMiddleware<ErrorHandlerMiddleware>();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+app.Run();

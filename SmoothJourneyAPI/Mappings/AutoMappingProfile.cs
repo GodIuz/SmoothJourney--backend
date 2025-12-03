@@ -6,7 +6,7 @@ namespace SmoothJourneyAPI.Mappings
 {
     public class AutoMappingProfile : Profile
     {
-        public AutoMapperProfile()
+        public AutoMappingProfile()
         {
             CreateMap<Users, UserResponseDto>();
             CreateMap<RegisterDto, Users>()
